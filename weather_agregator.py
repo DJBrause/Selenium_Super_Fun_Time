@@ -10,9 +10,11 @@ option = Options()
 option.add_argument("--disable-infobars")
 weather_com = "https://weather.com/"
 accuweather_com = "https://www.accuweather.com/"
+# nice to have in the future
 pogoda_onet = "https://pogoda.onet.pl/"
 twoja_pogoda = "https://www.twojapogoda.pl/"
 meteoprog = "https://www.meteoprog.pl/pl/"
+
 header = ["Today", "Tomorrow", "In 2 days", "In 3 days"]
 date_ = datetime.datetime.now()
 
@@ -151,9 +153,10 @@ def avarage_values_fun():
     ws_avg.append(avg_values)
 
 
-weather_com_fun()
-accuweather_fun()
-avarage_values_fun()
-wb.save(filename=dest_filename)
+if __name__ == "__main__":
+    weather_com_fun()
+    accuweather_fun()
+    avarage_values_fun()
+    wb.save(filename=dest_filename)
 
-print(f"Task complete! File name is {dest_filename}")
+    print(f"Task complete! File name is {dest_filename}")
