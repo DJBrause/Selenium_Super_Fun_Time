@@ -1,10 +1,14 @@
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
 from selenium.webdriver.common.keys import Keys
 from openpyxl import Workbook
 import datetime
 import time
 import random
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 option = Options()
 option.add_argument("--disable-infobars")
@@ -29,7 +33,7 @@ site_list = [weather_com, accuweather_com, pogoda_onet, twoja_pogoda, meteoprog]
 PATH = "chromedriver_win32/chromedriver.exe"
 driver = webdriver.Chrome(PATH)
 
-
+# Opens Weather.com
 def weather_com_fun():
     print(weather_com)
 
@@ -41,16 +45,21 @@ def weather_com_fun():
     driver.get(weather_com)
     driver.maximize_window()
     time.sleep(random.uniform(2, 3))
+    # Accept cookies
     cookies_but = driver.find_element_by_class_name("truste-button2")
     cookies_but.click()
     time.sleep(random.uniform(1, 4))
+    # Click on Search Bar and enter the search phrase
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "LocationSearch_input")))
     search_bar = driver.find_element_by_id("LocationSearch_input")
     search_bar.send_keys(str(searched_phrase))
     time.sleep(random.uniform(1, 3))
     search_bar.send_keys(Keys.RETURN)
     time.sleep(random.uniform(0.5, 1.2))
+    # Gets the weather for today (NOT temperature)
     weather_today = driver.find_element_by_css_selector('[data-testid="wxPhrase"]')
     weather.append(str(weather_today.text))
+    # Gets the weather and temperature for next 3 days
     temperature_forecast = driver.find_element_by_css_selector('[data-from-string="localsuiteNav_3_10-dniowa"]')
     temperature_forecast.click()
     weather_tomorrow = driver.find_elements_by_css_selector('[data-testid="TemperatureValue"]')
@@ -76,7 +85,7 @@ def weather_com_fun():
     ws.append(weather)
     ws.append(temperature)
 
-
+# Opens Accuweather.com
 def accuweather_fun():
     print(accuweather_com)
 
@@ -86,9 +95,11 @@ def accuweather_fun():
     driver.get(accuweather_com)
     driver.maximize_window()
     time.sleep(random.uniform(2, 3))
+    # Accept cookies
     cookies_but = driver.find_element_by_css_selector('[aria-label="Consent"]')
     cookies_but.click()
     time.sleep(random.uniform(1, 4))
+    # Click on Search Bar and enter the search phrase
     search_bar = driver.find_element_by_class_name("search-input")
     search_bar.send_keys(str(searched_phrase))
     time.sleep(random.uniform(1, 3))
@@ -100,13 +111,20 @@ def accuweather_fun():
     except IndexError:
         pass
     time.sleep(random.randint(2, 3))
-
+    # Closes Google Ad, or at least attempts to
     close_but = driver.find_element_by_class_name("header-city-link")
-    driver.execute_script("arguments[0].click();", close_but)  # bypasses google vignette
+    driver.execute_script("arguments[0].click();", close_but)  # Bypasses google vignette
     time.sleep(random.uniform(1.5, 2.2))
-    daily = driver.find_element_by_css_selector('[data-qa="daily"]')
-    daily.click()
-
+    try:
+        daily = driver.find_element_by_css_selector('[data-qa="daily"]')
+        daily.click()
+    except NoSuchElementException:
+        plan_b = driver.find_element_by_class_name("search-input")
+        plan_b.click()
+    except ElementClickInterceptedException:
+        plan_c = driver.find_element_by_id("dismiss-button")
+        plan_c.click()
+    # Gets weather and temperature for current day and next 3 days to come
     temp_ = driver.find_elements_by_xpath('//span[@class="high"]')
     for i in range(4):
         temperature.append(temp_[i].text)
@@ -120,7 +138,7 @@ def accuweather_fun():
     ws.append(weather)
     ws.append(temperature)
 
-
+# Simple script averaging the temperature values in Excel
 def avarage_values_fun():
     ws_avg = wb.create_sheet("Avarage Values")
     ws1 = wb["Weather.com"]
